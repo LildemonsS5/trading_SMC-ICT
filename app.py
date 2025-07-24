@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_templates
 from IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
 
 app = Flask(__name__)
