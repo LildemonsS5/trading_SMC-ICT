@@ -1,5 +1,5 @@
 from flask import Flask, request, render_templates
-from IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
+from strategy.IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
 
 app = Flask(__name__)
 config = TradingConfig()
