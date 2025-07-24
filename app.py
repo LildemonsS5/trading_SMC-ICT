@@ -1,10 +1,18 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect
 from strategy.IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
 
 app = Flask(__name__)
+
+# 🔧 Configuración de estrategia
 config = TradingConfig()
 strategy = IntegratedSMCStrategy(api_key="TU_API_KEY", config=config)
 
+# 🌐 Ruta principal redirige a /analyze
+@app.route("/")
+def home():
+    return redirect("/analyze")
+
+# 📊 Ruta de análisis con símbolo configurable
 @app.route("/analyze")
 def analyze_route():
     symbol = request.args.get("symbol", "EURUSD")
