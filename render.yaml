@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: trading-ap
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: FMP_API_KEY
+        value: 1OFGTIDh9osWhsdERKSn6lL7Q9lUgeNH
