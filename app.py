@@ -1,4 +1,4 @@
-from flask import Flask, request, render_templates
+from flask import Flask, request, render_template
 from strategy.IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
 
 app = Flask(__name__)
@@ -9,7 +9,7 @@ strategy = IntegratedSMCStrategy(api_key="TU_API_KEY", config=config)
 def analyze_route():
     symbol = request.args.get("symbol", "EURUSD")
     result = strategy.analyze_symbol(symbol)
-    return render_templates("report.html", 
+    return render_template("report.html", 
                            symbol=result["symbol"],
                            analysis_time=result["analysis_time"],
                            current_price=result["current_price"],
