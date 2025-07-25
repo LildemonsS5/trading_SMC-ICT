@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-3">
+    <meta charset="UTF-8">
     <title>Informe Institucional — {{ symbol }}</title>
     <style>
         body {
@@ -22,9 +22,6 @@
             margin-bottom: 20px;
             border-radius: 10px;
             box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
-        }
-        form {
-            margin-bottom: 20px;
         }
         label {
             font-weight: bold;
@@ -57,7 +54,7 @@
 <body>
     <h1>Informe de Análisis Institucional</h1>
 
-    <form action="/analyze" method="get">
+    <form action="/analyze" method="post">
         <label for="symbol">Escribí el par a analizar (ej: AUDCAD):</label>
         <input type="text" name="symbol" id="symbol" placeholder="Ej: AUDCAD" required>
         <button type="submit">Analizar</button>
@@ -117,7 +114,7 @@
                         {% elif current_price < premium_discount_zones.discount_end %}
                             <span class="buy">DISCOUNT (Compras)</span>
                         {% else %}
-                            EQUILIBRIUM
+                            EQUILIBRIO
                         {% endif %}
                     {% else %}
                         N/A
@@ -220,26 +217,10 @@
                     <span class="{% if confluence.zone == 'Discount' %}verde{% elif confluence.zone == 'Premium' %}rojo{% else %}gris{% endif %}">
                         {{ confluence.zone }}
                     </span>
-                    
-            </li>
-        </ul>
-        {% else %}
-            <p>No se pudo calcular la confluencia institucional para este activo.</p>
-        {% endif %}
-    </div>
-
-    <div class="seccion highlight">
-        <h2>Recomendación Estratégica</h2>
-        {% if recommendation %}
-            <ul>
-                <li><strong>Acción:</strong> {{ recommendation.action }}</li>
-                <li><strong>Zona de Entrada:</strong> {{ recommendation.entry_zone or "No disponible" }}</li>
-                <li><strong>Confianza:</strong> {{ recommendation.confidence }}%</li>
-                <li><strong>Fuente Primaria:</strong> {{ recommendation.primary_source or "N/A" }}</li>
-                <li><strong>Motivo:</strong> {{ recommendation.reason }}</li>
+                </li>
             </ul>
         {% else %}
-            <p>No se pudo generar una recomendación operativa.</p>
+            <p>No se pudo calcular la confluencia institucional.</p>
         {% endif %}
     </div>
 </body>
