@@ -118,7 +118,7 @@ class IntegratedSMCStrategy:
 
     def get_current_price(self, symbol: str = "EURUSD") -> Dict:
         """Obtiene el precio actual con manejo de errores."""
-        url = f"https://financialmodelingprep.com/api/v3/fx/{symbol}?apikey={self.api_key}"
+        url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={self.api_key}"
         try:
             response = self.session.get(url, headers=self.headers, timeout=10)
             response.raise_for_status()
