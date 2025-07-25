@@ -1,56 +1,91 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Análisis SMC + ICT - {{ symbol }}</title>
-  <style>
-    body { font-family: Arial; padding: 20px; background: #f8f9fa; color: #333; }
-    h1, h2 { color: #0c5460; }
-    .section { margin-bottom: 25px; }
-    .level { padding: 10px; margin-bottom: 10px; background: #fff; border-left: 5px solid #007bff; }
-    .level.buy { border-color: #28a745; }
-    .level.sell { border-color: #dc3545; }
-    .highlight { font-weight: bold; color: #0056b3; }
-    .recommendation { background: #e2e3e5; padding: 15px; border-radius: 6px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Informe Institucional — {{ symbol }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f4f4;
+            margin: 40px;
+            color: #333;
+        }
+        h1, h2 {
+            color: #114488;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        .seccion {
+            background-color: #ffffff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
-  <h1>📊 Análisis SMC + ICT</h1>
-  <p><strong>Par:</strong> {{ symbol }} | <strong>Hora:</strong> {{ analysis_time }}</p>
-  <p><strong>Precio Actual:</strong> {{ current_price }}</p>
+    <h1>Informe de Análisis Institucional</h1>
 
-  <div class="section">
-    <h2>🔍 Estructura del Mercado</h2>
-    <p><strong>Tendencia:</strong> {{ structure.trend }} | <strong>BOS:</strong> {{ structure.bos }} | <strong>CHOCH:</strong> {{ structure.choch }} | <strong>Señal:</strong> {{ structure.signal }}</p>
-  </div>
+    <div class="seccion">
+        <h2>Activo</h2>
+        <p>{{ symbol or "No disponible" }}</p>
+    </div>
 
-  <div class="section">
-    <h2>🧭 Kill Zone & Zonas</h2>
-    <p><strong>Kill Zone Activa:</strong> {{ kill_zone.name if kill_zone.is_active else 'Ninguna' }} ({{ kill_zone.priority }})</p>
-    {% if premium_discount.equilibrium %}
-      <p><strong>Equilibrio:</strong> {{ premium_discount.equilibrium }}</p>
-      <p><strong>Zona Actual:</strong> {{ premium_discount.current_zone }}</p>
-    {% endif %}
-  </div>
+    <div class="seccion">
+        <h2>Precio Actual</h2>
+        <p>{{ current_price or "No disponible" }}</p>
+    </div>
 
-  <div class="section">
-    <h2>📈 Niveles de Reacción</h2>
-    {% for level in reaction_levels %}
-      <div class="level {{ level.action|lower }}">
-        <p class="highlight">{{ level.action }} @ {{ level.price }}</p>
-        <p>Confianza: {{ level.confidence }}% | Fuente: {{ level.source }} | Frescura: {{ level.freshness }} min</p>
-        <p>Zona de Entrada: {{ level.entry_zone_min }} - {{ level.entry_zone_max }}</p>
-        <p><em>{{ level.reason }}</em></p>
-      </div>
-    {% endfor %}
-  </div>
+    <div class="seccion">
+        <h2>Fecha de Análisis</h2>
+        <p>{{ analysis_time or "No disponible" }}</p>
+    </div>
 
-  <div class="recommendation">
-    <h2>✅ Recomendación Final</h2>
-    <p><strong>Acción:</strong> {{ recommendation.action }}</p>
-    <p><strong>Zona Sugerida:</strong> {{ recommendation.entry_zone }}</p>
-    <p><strong>Confianza:</strong> {{ recommendation.confidence }}%</p>
-    <p>{{ recommendation.reason }}</p>
-  </div>
+    <div class="seccion">
+        <h2>Estructura en 1 Minuto</h2>
+        <p>{{ structure_1min or "Sin estructura definida" }}</p>
+    </div>
+
+    <div class="seccion">
+        <h2>Kill Zone Activa</h2>
+        {% if active_kill_zone %}
+            <p>{{ active_kill_zone }}</p>
+        {% else %}
+            <p>No hay Kill Zone activa.</p>
+        {% endif %}
+    </div>
+
+    <div class="seccion">
+        <h2>Zonas Premium/Discount</h2>
+        {% if premium_discount_zones %}
+            <ul>
+                {% for zone in premium_discount_zones %}
+                    <li>{{ zone }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No se detectaron zonas Premium ni Discount.</p>
+        {% endif %}
+    </div>
+
+    <div class="seccion">
+        <h2>Niveles de Reacción</h2>
+        {% if reaction_levels %}
+            <ul>
+                {% for level in reaction_levels %}
+                    <li>{{ level }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No hay niveles de reacción relevantes en este activo.</p>
+        {% endif %}
+    </div>
+
+    <div class="seccion">
+        <h2>Recomendación Estratégica</h2>
+        <p>{{ recommendation or "Sin recomendación disponible" }}</p>
+    </div>
 </body>
 </html>
