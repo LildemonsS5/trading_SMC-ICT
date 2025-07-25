@@ -128,7 +128,7 @@
 
     <div class="seccion">
         <h2>Niveles de Reacción</h2>
-        {% if reaction_levels %}
+        {% if reaction_levels and reaction_levels|length > 0 %}
             <table>
                 <tr>
                     <th>#</th>
@@ -157,10 +157,11 @@
             <p>No se detectaron niveles de reacción con confluencia suficiente.</p>
         {% endif %}
     </div>
+
     <div class="seccion">
         <h2>Resumen Técnico Institucional</h2>
-    
-        {% if swing_points %}
+
+        {% if swing_points and swing_points|length > 0 %}
             <h3>Swing Points Detectados (1min)</h3>
             <ul>
                 {% for point in swing_points %}
@@ -170,8 +171,8 @@
         {% else %}
             <p>No se detectaron swing points en este activo.</p>
         {% endif %}
-    
-        {% if order_blocks %}
+
+        {% if order_blocks and order_blocks|length > 0 %}
             <h3>Order Blocks (1min)</h3>
             <ul>
                 {% for ob in order_blocks %}
@@ -181,8 +182,8 @@
         {% else %}
             <p>No se detectaron Order Blocks relevantes en 1min.</p>
         {% endif %}
-    
-        {% if fair_value_gaps %}
+
+        {% if fair_value_gaps and fair_value_gaps|length > 0 %}
             <h3>Fair Value Gaps (FVG) en 1min</h3>
             <ul>
                 {% for fvg in fair_value_gaps %}
@@ -192,49 +193,12 @@
         {% else %}
             <p>No se encontraron FVG activos en 1min.</p>
         {% endif %}
-    
-        {% if liquidity_sweeps %}
+
+        {% if liquidity_sweeps and liquidity_sweeps|length > 0 %}
             <h3>Barridos de Liquidez (1min)</h3>
             <ul>
                 {% for sweep in liquidity_sweeps %}
                     <li>{{ sweep.level }} — {{ sweep.direction }} — Frescura: {{ sweep.freshness|round(1) }} min</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No se detectaron barridos de liquidez recientes.</p>
-        {% endif %}
-    </div>
-        {% else %}
-            <p>No se detectaron swing points en este activo.</p>
-        {% endif %}
-
-        {% if order_blocks %}
-            <h3>Order Blocks relevantes</h3>
-            <ul>
-                {% for ob in order_blocks %}
-                    <li>{{ ob.direction }} OB @ {{ ob.price }} — {{ ob.validity }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No se detectaron order blocks relevantes.</p>
-        {% endif %}
-
-        {% if fair_value_gaps %}
-            <h3>Fair Value Gaps (FVG)</h3>
-            <ul>
-                {% for fvg in fair_value_gaps %}
-                    <li>{{ fvg.size }} pips — {{ fvg.direction }} — {{ fvg.timestamp }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No se encontraron FVG activos.</p>
-        {% endif %}
-
-        {% if liquidity_sweeps %}
-            <h3>Barridos de Liquidez</h3>
-            <ul>
-                {% for sweep in liquidity_sweeps %}
-                    <li>{{ sweep.level }} — {{ sweep.direction }} — Frescura: {{ sweep.freshness }} min</li>
                 {% endfor %}
             </ul>
         {% else %}
@@ -259,5 +223,5 @@
             <p>No se pudo calcular la confluencia institucional.</p>
         {% endif %}
     </div>
-</body>
-</html>
+    </body>
+    </html>
