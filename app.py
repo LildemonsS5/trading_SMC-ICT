@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # 📊 Configuración de estrategia
 config = TradingConfig()
-strategy = IntegratedSMCStrategy(api_key="TU_API_KEY", config=config)
+strategy = IntegratedSMCStrategy(api_key="1OFGTIDh9osWhsdERKSn6lL7Q9lUgeNH", config=config)
 
 # 🧾 Logging básico
 logging.basicConfig(level=logging.INFO)
