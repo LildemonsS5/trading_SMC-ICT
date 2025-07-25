@@ -30,8 +30,9 @@
             font-weight: bold;
             margin-right: 10px;
         }
-        select, button {
-            padding: 5px 10px;
+        input[type="text"], button {
+            padding: 6px 12px;
+            font-size: 1em;
         }
     </style>
 </head>
@@ -39,13 +40,8 @@
     <h1>Informe de Análisis Institucional</h1>
 
     <form action="/analyze" method="get">
-        <label for="symbol">Seleccionar activo:</label>
-        <select name="symbol" id="symbol">
-            <option value="EURUSD">EURUSD</option>
-            <option value="GBPUSD">GBPUSD</option>
-            <option value="USDJPY">USDJPY</option>
-            <option value="BTCUSD">BTCUSD</option>
-        </select>
+        <label for="symbol">Escribí el par a analizar (ej: AUDCAD):</label>
+        <input type="text" name="symbol" id="symbol" placeholder="Ej: AUDCAD" required>
         <button type="submit">Analizar</button>
     </form>
 
