@@ -430,47 +430,69 @@ class IntegratedSMCStrategy:
         return sorted([lvl for lvl in reaction_levels if lvl['confidence'] >= self.config.min_confluence_score], key=lambda x: x['confidence'], reverse=True)
 
     def analyze_symbol(self, symbol: str) -> Dict:
-        """Análisis completo del símbolo con lógica SMC e ICT."""
+        """Análisis completo del símbolo con lógica SMC e ICT, con robustez ante fallos de datos."""
+    
         logger.info(f"Iniciando análisis SMC + ICT de {symbol}...")
-        
+    
         df_1min = self.get_market_data(symbol, "1min", 200)
         df_5min = self.get_market_data(symbol, "5min", 100)
         df_15min = self.get_market_data(symbol, "15min", 50)
-        
+    
+        # ⚠️ Si alguno viene vacío, devolvemos estructura válida pero vacía
         if df_1min.empty or df_5min.empty or df_15min.empty:
-            return {'error': 'No se pudieron obtener datos suficientes de todos los timeframes'}
-        
+            logger.error("❌ Faltan datos de al menos un timeframe.")
+            return {
+                'symbol': symbol,
+                'analysis_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'current_price': 0,
+                'structure_1min': {'trend': 'NO DATA', 'bos': False, 'choch': False, 'signal': None},
+                'reaction_levels': [],
+                'active_kill_zone': KillZoneInfo(name=None, priority='low', remaining_minutes=0, is_active=False),
+                'premium_discount_zones': PremiumDiscountZones(None, None, None, None, None, 'UNKNOWN'),
+                'recommendation': {
+                    'action': 'HOLD',
+                    'confidence': 0,
+                    'reason': 'No se pudieron obtener datos suficientes de todos los timeframes.'
+                }
+            }
+    
+        # ✅ Continuamos si tenemos los tres datasets
         current_data = self.get_current_price(symbol)
-        current_price = current_data.get('ask', df_1min.iloc[-1]['close']) 
-        
-        # Análisis ICT
+        current_price = current_data.get('ask', df_1min.iloc[-1]['close'])
+    
+        # 🔍 Análisis ICT
         active_kill_zone = self.detect_kill_zones()
         swings_15min = self.detect_swing_points_vectorized(df_15min)
         premium_discount_zones = self.calculate_premium_discount_zones(swings_15min)
-        
-        # Análisis SMC en 1min
+    
+        # 🔎 Análisis SMC
         swings_1min = self.detect_swing_points_vectorized(df_1min)
         liquidity_1min = self.find_liquidity_levels(swings_1min['all_swings'])
         sweeps_1min = self.detect_liquidity_sweeps(df_1min, liquidity_1min)
         structure_1min = self.detect_bos_choch_improved(df_1min, swings_1min)
         order_blocks_1min = self.detect_order_blocks(df_1min)
         fvg_zones_1min = self.detect_fair_value_gaps(df_1min)
-        
-        # Generar niveles de reacción y puntuarlos
+    
+        # 🧠 Evaluamos niveles con confluencia
         reaction_levels = self.find_reaction_levels(
-            df_1min, liquidity_1min, current_price, order_blocks_1min, 
+            df_1min, liquidity_1min, current_price, order_blocks_1min,
             fvg_zones_1min, sweeps_1min, active_kill_zone, premium_discount_zones
         )
-
+    
+        # 📈 Generamos la recomendación
+        recommendation = self.generate_recommendation(reaction_levels, structure_1min)
+    
         return {
-            'symbol': symbol, 'current_price': current_price,
+            'symbol': symbol,
             'analysis_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'current_price': current_price,
             'structure_1min': structure_1min,
             'reaction_levels': reaction_levels,
             'active_kill_zone': active_kill_zone,
             'premium_discount_zones': premium_discount_zones,
-            'recommendation': self.generate_recommendation(reaction_levels, structure_1min)
+            'recommendation': recommendation
         }
+            }
 
     def generate_recommendation(self, reaction_levels: List[Dict], structure_1min: Dict) -> Dict:
         """Genera una recomendación de trading basada en los niveles de confluencia."""
