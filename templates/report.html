@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-3">
     <title>Informe Institucional — {{ symbol }}</title>
     <style>
         body {
@@ -49,6 +49,9 @@
         .buy { color: #007a33; font-weight: bold; }
         .sell { color: #c70039; font-weight: bold; }
         .highlight { background-color: #e7f3ff; padding: 10px; border-radius: 6px; }
+        .verde { color: #007a33; font-weight: bold; }
+        .rojo { color: #c70039; font-weight: bold; }
+        .gris { color: #666; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -155,6 +158,73 @@
             </table>
         {% else %}
             <p>No se detectaron niveles de reacción con confluencia suficiente.</p>
+        {% endif %}
+    </div>
+
+    <div class="seccion">
+        <h2>Resumen Técnico Institucional</h2>
+
+        {% if swing_points %}
+            <h3>Swing Points Detectados</h3>
+            <ul>
+                {% for point in swing_points %}
+                    <li><strong>{{ point.type }}</strong> - {{ point.price }} - {{ point.timestamp }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No se detectaron swing points en este activo.</p>
+        {% endif %}
+
+        {% if order_blocks %}
+            <h3>Order Blocks relevantes</h3>
+            <ul>
+                {% for ob in order_blocks %}
+                    <li>{{ ob.direction }} OB @ {{ ob.price }} — {{ ob.validity }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No se detectaron order blocks relevantes.</p>
+        {% endif %}
+
+        {% if fair_value_gaps %}
+            <h3>Fair Value Gaps (FVG)</h3>
+            <ul>
+                {% for fvg in fair_value_gaps %}
+                    <li>{{ fvg.size }} pips — {{ fvg.direction }} — {{ fvg.timestamp }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No se encontraron FVG activos.</p>
+        {% endif %}
+
+        {% if liquidity_sweeps %}
+            <h3>Barridos de Liquidez</h3>
+            <ul>
+                {% for sweep in liquidity_sweeps %}
+                    <li>{{ sweep.level }} — {{ sweep.direction }} — Frescura: {{ sweep.freshness }} min</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No se detectaron barridos de liquidez recientes.</p>
+        {% endif %}
+    </div>
+
+    <div class="seccion highlight">
+        <h2>Diagnóstico de Confluencia Institucional</h2>
+        {% if confluence %}
+            <ul>
+                <li><strong>Score total:</strong> {{ confluence.score }}%</li>
+                <li><strong>Factores activos:</strong> {{ confluence.factors | join(", ") }}</li>
+                <li>
+                    <strong>Zona técnica actual:</strong> 
+                    <span class="{% if confluence.zone == 'Discount' %}verde{% elif confluence.zone == 'Premium' %}rojo{% else %}gris{% endif %}">
+                        {{ confluence.zone }}
+                    </span>
+                                </span>
+            </li>
+        </ul>
+        {% else %}
+            <p>No se pudo calcular la confluencia institucional para este activo.</p>
         {% endif %}
     </div>
 
