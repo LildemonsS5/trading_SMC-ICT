@@ -25,7 +25,7 @@ def home():
 @app.route("/analyze", methods=["GET", "POST"])
 def analyze_route():
     if request.method == "GET":
-        return render_template("formulario.html")  # Asegurate que exista este template para el formulario
+        return render_template("report.html") # Asegurate que exista este template para el formulario
 
     # 🔍 Captura del símbolo
     symbol = request.form.get("symbol", "").strip().upper()
