@@ -492,7 +492,7 @@ class IntegratedSMCStrategy:
             'premium_discount_zones': premium_discount_zones,
             'recommendation': recommendation
         }
-            }
+            
 
     def generate_recommendation(self, reaction_levels: List[Dict], structure_1min: Dict) -> Dict:
         """Genera una recomendación de trading basada en los niveles de confluencia."""
