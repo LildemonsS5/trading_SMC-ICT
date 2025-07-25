@@ -157,17 +157,53 @@
             <p>No se detectaron niveles de reacción con confluencia suficiente.</p>
         {% endif %}
     </div>
-
     <div class="seccion">
         <h2>Resumen Técnico Institucional</h2>
-
+    
         {% if swing_points %}
-            <h3>Swing Points Detectados</h3>
+            <h3>Swing Points Detectados (1min)</h3>
             <ul>
                 {% for point in swing_points %}
                     <li><strong>{{ point.type }}</strong> - {{ point.price }} - {{ point.timestamp }}</li>
                 {% endfor %}
             </ul>
+        {% else %}
+            <p>No se detectaron swing points en este activo.</p>
+        {% endif %}
+    
+        {% if order_blocks %}
+            <h3>Order Blocks (1min)</h3>
+            <ul>
+                {% for ob in order_blocks %}
+                    <li>{{ ob.direction }} OB @ {{ ob.price }} — Frescura: {{ ob.freshness|round(1) }} min — {{ ob.validity }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No se detectaron Order Blocks relevantes en 1min.</p>
+        {% endif %}
+    
+        {% if fair_value_gaps %}
+            <h3>Fair Value Gaps (FVG) en 1min</h3>
+            <ul>
+                {% for fvg in fair_value_gaps %}
+                    <li>{{ fvg.size|round(2) }} pips — {{ fvg.direction }} — {{ fvg.timestamp }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No se encontraron FVG activos en 1min.</p>
+        {% endif %}
+    
+        {% if liquidity_sweeps %}
+            <h3>Barridos de Liquidez (1min)</h3>
+            <ul>
+                {% for sweep in liquidity_sweeps %}
+                    <li>{{ sweep.level }} — {{ sweep.direction }} — Frescura: {{ sweep.freshness|round(1) }} min</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No se detectaron barridos de liquidez recientes.</p>
+        {% endif %}
+    </div>
         {% else %}
             <p>No se detectaron swing points en este activo.</p>
         {% endif %}
