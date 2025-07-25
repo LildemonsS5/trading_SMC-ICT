@@ -17,12 +17,37 @@ def home():
 def analyze_route():
     symbol = request.args.get("symbol", "EURUSD")
     result = strategy.analyze_symbol(symbol)
+
+    # 🛡️ Validación contra errores internos
+    if "error" in result:
+        return f"<h1>Error en el análisis</h1><p>{result['error']}</p>"
+
+    # 🔍 Validación de claves obligatorias
+    expected_keys = [
+        "symbol", "analysis_time", "current_price", "structure_1min",
+        "active_kill_zone", "premium_discount_zones",
+        "reaction_levels", "recommendation"
+    ]
+
+    missing_keys = [key for key in expected_keys if key not in result]
+
+    if missing_keys:
+        return (
+            f"<h1>Faltan datos en el análisis</h1>"
+            f"<p>Claves faltantes: {', '.join(missing_keys)}</p>"
+        )
+
+    # ✅ Render seguro con claves existentes
     return render_template("report.html", 
-                           symbol=result["symbol"],
-                           analysis_time=result["analysis_time"],
-                           current_price=result["current_price"],
-                           structure=result["structure_1min"],
-                           kill_zone=result["active_kill_zone"],
-                           premium_discount=result["premium_discount_zones"],
-                           reaction_levels=result["reaction_levels"],
-                           recommendation=result["recommendation"])
+        symbol=result.get("symbol", "No disponible"),
+        analysis_time=result.get("analysis_time", "No disponible"),
+        current_price=result.get("current_price", "No disponible"),
+        structure_1min=result.get("structure_1min", "Sin estructura definida"),
+        active_kill_zone=result.get("active_kill_zone", None),
+        premium_discount_zones=result.get("premium_discount_zones", []),
+        reaction_levels=result.get("reaction_levels", []),
+        recommendation=result.get("recommendation", "Sin recomendación disponible")
+    )
+
+if __name__ == "__main__":
+    app.run(debug=True)
