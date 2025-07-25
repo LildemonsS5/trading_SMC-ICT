@@ -492,9 +492,15 @@ class IntegratedSMCStrategy:
             'reaction_levels': reaction_levels,
             'active_kill_zone': active_kill_zone,
             'premium_discount_zones': premium_discount_zones,
-            'recommendation': recommendation
+            'recommendation': recommendation,
+        
+            # 🧠 Datos micro sin filtrar (útiles para visualización y debugging)
+            'order_blocks': order_blocks_1min,
+            'fair_value_gaps': fvg_zones_1min,
+            'liquidity_sweeps': sweeps_1min,
+            'swing_points': swings_1min['all_swings']
         }
-            
+                    
 
     def generate_recommendation(self, reaction_levels: List[Dict], structure_1min: Dict) -> Dict:
         """Genera una recomendación de trading basada en los niveles de confluencia."""
