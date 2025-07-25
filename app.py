@@ -4,6 +4,7 @@ import logging
 from flask import Flask, request, render_template, redirect
 from datetime import datetime
 from strategy.IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
+from pytz import timezone
 
 app = Flask(__name__)
 
@@ -46,17 +47,22 @@ def analyze_route():
         logger.error(f"❌ Error en el análisis: {result['error']}")
         result = {
             "symbol": symbol,
-            "analysis_time": datetime.utcnow().isoformat(),
+            "analysis_time": datetime.now(timezone("America/Argentina/Buenos_Aires")).strftime("%Y-%m-%d %H:%M:%S")
             "current_price": "No disponible",
             "structure_1min": "Error",
             "active_kill_zone": None,
             "premium_discount_zones": None,
             "reaction_levels": [],
             "recommendation": f"⚠️ Falló el análisis: {result['error']}"
+            
         }
+        data.setdefault("recommendation", None)
+        data.setdefault("structure_1min", None)
+        data.setdefault("premium_discount_zones", None)
+        data.setdefault("reaction_levels", [])
 
     # ✅ Render seguro
-    return render_template("informe.html", **result)
+    return render_template("report.html", **result)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
