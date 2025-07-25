@@ -1,11 +1,19 @@
+import os
 from flask import Flask, request, render_template, redirect
+from datetime import datetime
 from strategy.IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
+import logging
+import re
 
 app = Flask(__name__)
 
 # 🔧 Configuración de estrategia
 config = TradingConfig()
 strategy = IntegratedSMCStrategy(api_key="TU_API_KEY", config=config)
+
+# 🧾 Configuración de logging básico
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # 🌐 Ruta principal redirige a /analyze
 @app.route("/")
@@ -15,38 +23,56 @@ def home():
 # 📊 Ruta de análisis con símbolo configurable
 @app.route("/analyze")
 def analyze_route():
-    symbol = request.args.get("symbol", "EURUSD")
+    # Captura dinámica del símbolo (escrito por el usuario)
+    symbol = request.args.get("symbol", "").upper()
+
+    # Validación básica del formato (por ejemplo: AUDCAD, BTCUSD)
+    if not re.match(r"^[A-Z]{6,7}$", symbol):
+        logger.warning(f"Símbolo inválido recibido: {symbol}")
+        return (
+            f"<h1>Activo inválido</h1>"
+            f"<p>El símbolo '{symbol}' no tiene el formato correcto. Usá algo tipo 'AUDCAD'.</p>"
+        )
+
+    logger.info(f"Iniciando análisis institucional de {symbol}")
+
+    # Llamada a la estrategia
     result = strategy.analyze_symbol(symbol)
 
-    # 🛡️ Validación contra errores internos
+    # 🛡️ Fallback si hay error en el análisis
     if "error" in result:
-        return f"<h1>Error en el análisis</h1><p>{result['error']}</p>"
+        logger.error(f"❌ Error en el análisis: {result['error']}")
+        result = {
+            "symbol": symbol,
+            "analysis_time": datetime.utcnow().isoformat(),
+            "current_price": "No disponible",
+            "structure_1min": "Error",
+            "active_kill_zone": None,
+            "premium_discount_zones": None,
+            "reaction_levels": [],
+            "recommendation": f"⚠️ Análisis fallido: {result['error']}"
+        }
 
-    # 🔍 Validación de claves obligatorias
+    # 🧱 Sanitización de claves esperadas
     expected_keys = [
         "symbol", "analysis_time", "current_price", "structure_1min",
         "active_kill_zone", "premium_discount_zones",
         "reaction_levels", "recommendation"
     ]
 
-    missing_keys = [key for key in expected_keys if key not in result]
+    for key in expected_keys:
+        result.setdefault(key, None)
 
-    if missing_keys:
-        return (
-            f"<h1>Faltan datos en el análisis</h1>"
-            f"<p>Claves faltantes: {', '.join(missing_keys)}</p>"
-        )
-
-    # ✅ Render seguro con claves existentes
-    return render_template("report.html", 
-        symbol=result.get("symbol", "No disponible"),
-        analysis_time=result.get("analysis_time", "No disponible"),
-        current_price=result.get("current_price", "No disponible"),
-        structure_1min=result.get("structure_1min", "Sin estructura definida"),
-        active_kill_zone=result.get("active_kill_zone", None),
-        premium_discount_zones=result.get("premium_discount_zones", []),
-        reaction_levels=result.get("reaction_levels", []),
-        recommendation=result.get("recommendation", "Sin recomendación disponible")
+    # ✅ Render institucional del HTML
+    return render_template("report.html",
+        symbol=result["symbol"],
+        analysis_time=result["analysis_time"],
+        current_price=result["current_price"],
+        structure_1min=result["structure_1min"],
+        active_kill_zone=result["active_kill_zone"],
+        premium_discount_zones=result["premium_discount_zones"],
+        reaction_levels=result["reaction_levels"],
+        recommendation=result["recommendation"]
     )
 
 if __name__ == "__main__":
