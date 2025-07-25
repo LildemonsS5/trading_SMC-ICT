@@ -23,10 +23,10 @@ def home():
 # 📊 Ruta de análisis con símbolo configurable
 @app.route("/analyze")
 def analyze_route():
-    # Captura dinámica del símbolo (escrito por el usuario)
-    symbol = request.args.get("symbol", "").upper()
+    # Captura dinámica del símbolo desde formulario POST
+    symbol = request.form.get("symbol", "").strip().upper()
 
-    # Validación básica del formato (por ejemplo: AUDCAD, BTCUSD)
+    # Validación del formato: solo letras, 6 o 7 caracteres (ej: AUDCAD, BTCUSD)
     if not re.match(r"^[A-Z]{6,7}$", symbol):
         logger.warning(f"Símbolo inválido recibido: {symbol}")
         return (
@@ -53,15 +53,11 @@ def analyze_route():
             "recommendation": f"⚠️ Análisis fallido: {result['error']}"
         }
 
-    # 🧱 Sanitización de claves esperadas
-    expected_keys = [
-        "symbol", "analysis_time", "current_price", "structure_1min",
-        "active_kill_zone", "premium_discount_zones",
-        "reaction_levels", "recommendation"
-    ]
-
-    for key in expected_keys:
-        result.setdefault(key, None)
+    # 🔎 Opcional: logueo del resultado para debugging
+    logger.info(f"Resultado de {symbol}: {result}")
+    
+    # Seguirías con el render del HTML usando result
+    return render_template("informe.html", **result)
 
     # ✅ Render institucional del HTML
     return render_template("report.html",
