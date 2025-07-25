@@ -61,9 +61,12 @@
         <h2>Zonas Premium/Discount</h2>
         {% if premium_discount_zones %}
             <ul>
-                {% for zone in premium_discount_zones %}
-                    <li>{{ zone }}</li>
-                {% endfor %}
+                <li><strong>Zona Discount:</strong> {{ premium_discount_zones.discounted_zone or "No disponible" }}</li>
+                <li><strong>Zona Premium:</strong> {{ premium_discount_zones.premium_zone or "No disponible" }}</li>
+                <li><strong>Entry:</strong> {{ premium_discount_zones.entry or "N/A" }}</li>
+                <li><strong>Exit:</strong> {{ premium_discount_zones.exit or "N/A" }}</li>
+                <li><strong>Dirección:</strong> {{ premium_discount_zones.direction or "N/A" }}</li>
+                <li><strong>Estado:</strong> {{ premium_discount_zones.state or "N/A" }}</li>
             </ul>
         {% else %}
             <p>No se detectaron zonas Premium ni Discount.</p>
