@@ -117,16 +117,18 @@ class IntegratedSMCStrategy:
         return pd.DataFrame()
 
     def get_current_price(self, symbol: str = "EURUSD") -> Dict:
-        """Obtiene el precio actual con manejo de errores."""
+        """Obtiene el precio actual usando el endpoint disponible en el plan gratuito."""
         url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={self.api_key}"
         try:
             response = self.session.get(url, headers=self.headers, timeout=10)
             response.raise_for_status()
             data = response.json()
             if isinstance(data, list) and len(data) > 0:
-                return data[0]
-            elif isinstance(data, dict):
-                return data
+                return {
+                    'symbol': data[0].get('symbol', symbol),
+                    'price': data[0].get('price', 0),
+                    'timestamp': data[0].get('timestamp', '')
+                }
             logger.error(f"❌ No se obtuvieron datos de precio válidos para {symbol}")
             return {}
         except requests.exceptions.RequestException as e:
@@ -458,7 +460,7 @@ class IntegratedSMCStrategy:
     
         # ✅ Continuamos si tenemos los tres datasets
         current_data = self.get_current_price(symbol)
-        current_price = current_data.get('ask', df_1min.iloc[-1]['close'])
+        current_price = current_data.get('price', df_1min.iloc[-1]['close'])
     
         # 🔍 Análisis ICT
         active_kill_zone = self.detect_kill_zones()
