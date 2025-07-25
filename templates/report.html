@@ -34,6 +34,21 @@
             padding: 6px 12px;
             font-size: 1em;
         }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .buy { color: #007a33; font-weight: bold; }
+        .sell { color: #c70039; font-weight: bold; }
+        .highlight { background-color: #e7f3ff; padding: 10px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -61,29 +76,50 @@
     </div>
 
     <div class="seccion">
-        <h2>Estructura en 1 Minuto</h2>
-        <p>{{ structure_1min or "Sin estructura definida" }}</p>
-    </div>
-
-    <div class="seccion">
         <h2>Kill Zone Activa</h2>
-        {% if active_kill_zone %}
-            <p>{{ active_kill_zone }}</p>
+        {% if active_kill_zone and active_kill_zone.is_active %}
+            <p>{{ active_kill_zone.name }} (Prioridad: {{ active_kill_zone.priority }})</p>
         {% else %}
             <p>No hay Kill Zone activa.</p>
         {% endif %}
     </div>
 
     <div class="seccion">
-        <h2>Zonas Premium/Discount</h2>
+        <h2>Estructura del Mercado (1min)</h2>
+        {% if structure_1min %}
+            <ul>
+                <li><strong>Tendencia:</strong> {{ structure_1min.trend or "N/A" }}</li>
+                <li><strong>BOS:</strong> {{ structure_1min.bos }}</li>
+                <li><strong>CHOCH:</strong> {{ structure_1min.choch }}</li>
+                <li><strong>Señal:</strong> {{ structure_1min.signal or "N/A" }}</li>
+            </ul>
+        {% else %}
+            <p>No se pudo determinar la estructura de mercado.</p>
+        {% endif %}
+    </div>
+
+    <div class="seccion">
+        <h2>Zonas Premium / Discount</h2>
         {% if premium_discount_zones %}
             <ul>
-                <li><strong>Zona Discount:</strong> {{ premium_discount_zones.discounted_zone or "No disponible" }}</li>
-                <li><strong>Zona Premium:</strong> {{ premium_discount_zones.premium_zone or "No disponible" }}</li>
-                <li><strong>Entry:</strong> {{ premium_discount_zones.entry or "N/A" }}</li>
-                <li><strong>Exit:</strong> {{ premium_discount_zones.exit or "N/A" }}</li>
-                <li><strong>Dirección:</strong> {{ premium_discount_zones.direction or "N/A" }}</li>
-                <li><strong>Estado:</strong> {{ premium_discount_zones.state or "N/A" }}</li>
+                <li><strong>Rango alto:</strong> {{ premium_discount_zones.range_high or "N/A" }}</li>
+                <li><strong>Rango bajo:</strong> {{ premium_discount_zones.range_low or "N/A" }}</li>
+                <li><strong>Equilibrio:</strong> {{ premium_discount_zones.equilibrium or "N/A" }}</li>
+                <li><strong>Zona Premium desde:</strong> {{ premium_discount_zones.premium_start or "N/A" }}</li>
+                <li><strong>Zona Discount hasta:</strong> {{ premium_discount_zones.discount_end or "N/A" }}</li>
+                <li><strong>Zona actual:</strong>
+                    {% if current_price and premium_discount_zones.equilibrium %}
+                        {% if current_price > premium_discount_zones.premium_start %}
+                            <span class="sell">PREMIUM (Ventas)</span>
+                        {% elif current_price < premium_discount_zones.discount_end %}
+                            <span class="buy">DISCOUNT (Compras)</span>
+                        {% else %}
+                            EQUILIBRIUM
+                        {% endif %}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </li>
             </ul>
         {% else %}
             <p>No se detectaron zonas Premium ni Discount.</p>
@@ -93,19 +129,48 @@
     <div class="seccion">
         <h2>Niveles de Reacción</h2>
         {% if reaction_levels %}
-            <ul>
+            <table>
+                <tr>
+                    <th>#</th>
+                    <th>Acción</th>
+                    <th>Precio</th>
+                    <th>Distancia (pips)</th>
+                    <th>Confianza</th>
+                    <th>Fuente</th>
+                    <th>Frescura</th>
+                    <th>Motivo</th>
+                </tr>
                 {% for level in reaction_levels %}
-                    <li>{{ level }}</li>
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="{{ 'buy' if level.action == 'BUY' else 'sell' }}">{{ level.action }}</td>
+                    <td>{{ level.price }}</td>
+                    <td>{{ level.distance_pips }}</td>
+                    <td>{{ level.confidence }}%</td>
+                    <td>{{ level.source }}</td>
+                    <td>{{ level.freshness }} min</td>
+                    <td>{{ level.reason }}</td>
+                </tr>
                 {% endfor %}
-            </ul>
+            </table>
         {% else %}
-            <p>No hay niveles de reacción relevantes en este activo.</p>
+            <p>No se detectaron niveles de reacción con confluencia suficiente.</p>
         {% endif %}
     </div>
 
-    <div class="seccion">
+    <div class="seccion highlight">
         <h2>Recomendación Estratégica</h2>
-        <p>{{ recommendation or "Sin recomendación disponible" }}</p>
+        {% if recommendation %}
+            <ul>
+                <li><strong>Acción:</strong> {{ recommendation.action }}</li>
+                <li><strong>Zona de Entrada:</strong> {{ recommendation.entry_zone or "No disponible" }}</li>
+                <li><strong>Confianza:</strong> {{ recommendation.confidence }}%</li>
+                <li><strong>Fuente Primaria:</strong> {{ recommendation.primary_source or "N/A" }}</li>
+                <li><strong>Motivo:</strong> {{ recommendation.reason }}</li>
+            </ul>
+        {% else %}
+            <p>No se pudo generar una recomendación operativa.</p>
+        {% endif %}
     </div>
 </body>
 </html>
