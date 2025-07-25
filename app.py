@@ -3,8 +3,8 @@ import re
 import logging
 from flask import Flask, request, render_template, redirect
 from datetime import datetime
-from strategy.IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
 from pytz import timezone
+from strategy.IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
 
 app = Flask(__name__)
 
@@ -21,11 +21,11 @@ logger = logging.getLogger(__name__)
 def home():
     return redirect("/analyze")
 
-# 📈 Ruta de análisis con método POST
+# 📈 Ruta de análisis
 @app.route("/analyze", methods=["GET", "POST"])
 def analyze_route():
     if request.method == "GET":
-        return render_template("formulario.html")  # Asumimos que tenés un HTML con el formulario
+        return render_template("formulario.html")  # Asegurate que exista este template para el formulario
 
     # 🔍 Captura del símbolo
     symbol = request.form.get("symbol", "").strip().upper()
@@ -42,26 +42,52 @@ def analyze_route():
     logger.info(f"🔬 Iniciando análisis institucional de {symbol}")
     result = strategy.analyze_symbol(symbol)
 
+    # ⏱️ Hora UTC-3
+    local_time = datetime.now(timezone("America/Argentina/Buenos_Aires")).strftime("%Y-%m-%d %H:%M:%S")
+    result["analysis_time"] = local_time
+    result["symbol"] = symbol  # Por si falla el análisis
+
     # 🚨 Fallback si hay error
     if "error" in result:
         logger.error(f"❌ Error en el análisis: {result['error']}")
         result = {
             "symbol": symbol,
-            "analysis_time": datetime.now(timezone("America/Argentina/Buenos_Aires")).strftime("%Y-%m-%d %H:%M:%S")
+            "analysis_time": local_time,
             "current_price": "No disponible",
-            "structure_1min": "Error",
+            "structure_1min": None,
             "active_kill_zone": None,
             "premium_discount_zones": None,
             "reaction_levels": [],
-            "recommendation": f"⚠️ Falló el análisis: {result['error']}"
-            
+            "recommendation": None,
+            "swing_points": [],
+            "order_blocks": [],
+            "fair_value_gaps": [],
+            "liquidity_sweeps": [],
+            "confluence": {
+                "score": None,
+                "factors": [],
+                "zone": "Neutral"
+            }
         }
-        data.setdefault("recommendation", None)
-        data.setdefault("structure_1min", None)
-        data.setdefault("premium_discount_zones", None)
-        data.setdefault("reaction_levels", [])
 
-    # ✅ Render seguro
+    # 🛡️ Blindaje adicional ante claves faltantes
+    result.setdefault("current_price", "No disponible")
+    result.setdefault("structure_1min", None)
+    result.setdefault("active_kill_zone", None)
+    result.setdefault("premium_discount_zones", None)
+    result.setdefault("reaction_levels", [])
+    result.setdefault("recommendation", None)
+    result.setdefault("swing_points", [])
+    result.setdefault("order_blocks", [])
+    result.setdefault("fair_value_gaps", [])
+    result.setdefault("liquidity_sweeps", [])
+    result.setdefault("confluence", {
+        "score": None,
+        "factors": [],
+        "zone": "Neutral"
+    })
+
+    # ✅ Render final
     return render_template("report.html", **result)
 
 if __name__ == "__main__":
