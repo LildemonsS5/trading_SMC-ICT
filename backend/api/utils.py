@@ -1,21 +1,14 @@
+from datetime import datetime
+import pytz
 
-import pandas as pd
-import logging
+def is_valid_session(current_time: datetime, sessions: list) -> bool:
+    ny_tz = pytz.timezone('America/New_York')
+    current_time_ny = current_time.astimezone(ny_tz)
+    hour = current_time_ny.hour
+    minute = current_time_ny.minute
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-def validate_dataframe(df: pd.DataFrame, required_columns: list = None) -> bool:
-    """Valida que el DataFrame tenga la estructura correcta."""
-    if required_columns is None:
-        required_columns = ['date', 'open', 'high', 'low', 'close', 'volume']
-    
-    if df.empty:
-        logger.warning("DataFrame está vacío")
-        return False
-        
-    if not all(col in df.columns for col in required_columns):
-        logger.warning(f"Columnas faltantes: {set(required_columns) - set(df.columns)}")
-        return False
-        
-    return True
+    if 'London' in sessions and 3 <= hour <= 11:  # London session: 3 AM - 11 AM NY time
+        return True
+    if 'New York' in sessions and 8 <= hour <= 16:  # NY session: 8 AM - 4 PM NY time
+        return True
+    return False
