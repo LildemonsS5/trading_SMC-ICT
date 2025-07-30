@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 
 function AnalysisForm({ setAnalysisResult, setLoading, setError }) {
   const [symbol, setSymbol] = useState('');
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000'; // Usar variable de entorno o localhost para desarrollo
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,12 +17,12 @@ function AnalysisForm({ setAnalysisResult, setLoading, setError }) {
         body: JSON.stringify({ symbol: symbol.toUpperCase() }),
       });
       if (!response.ok) {
-        throw new Error('Error en el análisis');
+        throw new Error(`Error en el análisis: ${response.statusText} (${response.status})`);
       }
       const data = await response.json();
       setAnalysisResult(data);
     } catch (err) {
-      setError('No se pudo realizar el análisis. Por favor, intenta de nuevo.');
+      setError(`No se pudo realizar el análisis: ${err.message}`);
     } finally {
       setLoading(false);
     }
