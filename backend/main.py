@@ -1,5 +1,6 @@
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from api.strategy import IntegratedSMCStrategy
 from api.config import TradingConfig
@@ -9,6 +10,15 @@ import os
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://smc-trading-frontend.onrender.com", "http://localhost:3000", "*"],  # '*' para pruebas
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class SymbolRequest(BaseModel):
     symbol: str
@@ -22,7 +32,7 @@ async def analyze_symbol(request: SymbolRequest):
             preferred_pairs=['EURUSD', 'GBPUSD', 'USDJPY'],
             trading_sessions=['London', 'New York']
         )
-        api_key = os.getenv("API_KEY", "1OFGTIDh9osWhsdERKSn6lL7Q9lUgeNH")  # Obtener API key desde variable de entorno
+        api_key = os.getenv("API_KEY", "1OFGTIDh9osWhsdERKSn6lL7Q9lUgeNH")
         strategy = IntegratedSMCStrategy(api_key=api_key, config=config)
         result = strategy.analyze_symbol(request.symbol.upper())
         if 'error' in result:
@@ -32,7 +42,11 @@ async def analyze_symbol(request: SymbolRequest):
         logger.error(f"Error analizando símbolo: {str(e)}")
         raise HTTPException(status_code=500, detail="Error interno del servidor")
 
+@app.get("/")
+async def root():
+    return {"message": "SMC Trading App Backend - Use POST /analyze to analyze a symbol"}
+
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8000))  # Usar puerto de Render o 8000 para desarrollo local
+    port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
