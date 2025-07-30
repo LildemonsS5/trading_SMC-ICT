@@ -1,227 +1,121 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Informe Institucional — {{ symbol }}</title>
+    <title>SMC/ICT Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f4f4f4;
-            margin: 40px;
-            color: #333;
-        }
-        h1, h2 {
-            color: #114488;
-        }
-        ul {
-            padding-left: 20px;
-        }
-        .seccion {
-            background-color: #ffffff;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
-        }
-        label {
-            font-weight: bold;
-            margin-right: 10px;
-        }
-        input[type="text"], button {
-            padding: 6px 12px;
-            font-size: 1em;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            text-align: left;
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        .buy { color: #007a33; font-weight: bold; }
-        .sell { color: #c70039; font-weight: bold; }
-        .highlight { background-color: #e7f3ff; padding: 10px; border-radius: 6px; }
-        .verde { color: #007a33; font-weight: bold; }
-        .rojo { color: #c70039; font-weight: bold; }
-        .gris { color: #666; font-weight: bold; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { color: #333; }
+        .premium { color: red; }
+        .discount { color: green; }
+        .buy { color: green; font-weight: bold; }
+        .sell { color: red; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
-    <h1>Informe de Análisis Institucional</h1>
-
-    <form action="/analyze" method="post">
-        <label for="symbol">Escribí el par a analizar (ej: AUDCAD):</label>
-        <input type="text" name="symbol" id="symbol" placeholder="Ej: AUDCAD" required>
+    <h1>SMC/ICT Analysis</h1>
+    <p>{{ current_time }} UTC-03</p>
+    
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% else %}
+    <form method="POST">
+        <label>Par de Divisas:</label>
+        <select name="pair">
+            <option value="EURUSD=X" {% if pair == 'EURUSD' %}selected{% endif %}>EURUSD</option>
+            <option value="GBPUSD=X" {% if pair == 'GBPUSD' %}selected{% endif %}>GBPUSD</option>
+            <option value="USDJPY=X" {% if pair == 'USDJPY' %}selected{% endif %}>USDJPY</option>
+        </select>
+        <label>Timeframe:</label>
+        <select name="timeframe">
+            <option value="15m" {% if timeframe == '15m' %}selected{% endif %}>15 Minutos</option>
+            <option value="5m" {% if timeframe == '5m' %}selected{% endif %}>5 Minutos</option>
+            <option value="1h" {% if timeframe == '1h' %}selected{% endif %}>1 Hora</option>
+        </select>
+        <label>Confluencia Mínima (%):</label>
+        <input type="number" name="confluencia_min" value="{{ confluencia_min }}" min="0" max="100">
         <button type="submit">Analizar</button>
     </form>
 
-    <div class="seccion">
-        <h2>Activo</h2>
-        <p>{{ symbol or "No disponible" }}</p>
-    </div>
+    <h2>Resultados del Análisis</h2>
+    <h3>Resumen del Mercado</h3>
+    <p>Precio Actual: {{ results.price | round(5) }}</p>
+    <p>Tendencia: {{ results.trend }}</p>
+    <p>Última Actualización: {{ current_time }}</p>
 
-    <div class="seccion">
-        <h2>Precio Actual</h2>
-        <p>{{ current_price or "No disponible" }}</p>
-    </div>
-
-    <div class="seccion">
-        <h2>Fecha de Análisis</h2>
-        <p>{{ analysis_time or "No disponible" }}</p>
-    </div>
-
-    <div class="seccion">
-        <h2>Kill Zone Activa</h2>
-        {% if active_kill_zone and active_kill_zone.is_active %}
-            <p>{{ active_kill_zone.name }} (Prioridad: {{ active_kill_zone.priority }})</p>
+    <h3>Contexto ICT</h3>
+    <p>Kill Zone: 
+        {% if kill_zone.active %}
+        Activa: {{ kill_zone.name }} (Prioridad: {{ kill_zone.priority }}, Tiempo restante: {{ kill_zone.remaining }} min)
         {% else %}
-            <p>No hay Kill Zone activa.</p>
+        No activa
         {% endif %}
-    </div>
+    </p>
 
-    <div class="seccion">
-        <h2>Estructura del Mercado (1min)</h2>
-        {% if structure_1min %}
-            <ul>
-                <li><strong>Tendencia:</strong> {{ structure_1min.trend or "N/A" }}</li>
-                <li><strong>BOS:</strong> {{ structure_1min.bos }}</li>
-                <li><strong>CHOCH:</strong> {{ structure_1min.choch }}</li>
-                <li><strong>Señal:</strong> {{ structure_1min.signal or "N/A" }}</li>
-            </ul>
-        {% else %}
-            <p>No se pudo determinar la estructura de mercado.</p>
-        {% endif %}
-    </div>
+    <h3>Premium/Discount</h3>
+    <p>Zona actual: <span class="{{ 'discount' if results.zone == 'discount' else 'premium' }}">{{ results.zone }}</span></p>
+    <p>Equilibrio: {{ results.equilibrium | round(5) }}</p>
+    <p>Rango: {{ results.range }}</p>
 
-    <div class="seccion">
-        <h2>Zonas Premium / Discount</h2>
-        {% if premium_discount_zones %}
-            <ul>
-                <li><strong>Rango alto:</strong> {{ premium_discount_zones.range_high or "N/A" }}</li>
-                <li><strong>Rango bajo:</strong> {{ premium_discount_zones.range_low or "N/A" }}</li>
-                <li><strong>Equilibrio:</strong> {{ premium_discount_zones.equilibrium or "N/A" }}</li>
-                <li><strong>Zona Premium desde:</strong> {{ premium_discount_zones.premium_start or "N/A" }}</li>
-                <li><strong>Zona Discount hasta:</strong> {{ premium_discount_zones.discount_end or "N/A" }}</li>
-                <li><strong>Zona actual:</strong>
-                    {% if current_price and premium_discount_zones.equilibrium %}
-                        {% if current_price > premium_discount_zones.premium_start %}
-                            <span class="sell">PREMIUM (Ventas)</span>
-                        {% elif current_price < premium_discount_zones.discount_end %}
-                            <span class="buy">DISCOUNT (Compras)</span>
-                        {% else %}
-                            EQUILIBRIO
-                        {% endif %}
-                    {% else %}
-                        N/A
-                    {% endif %}
-                </li>
-            </ul>
-        {% else %}
-            <p>No se detectaron zonas Premium ni Discount.</p>
-        {% endif %}
-    </div>
+    <h3>Análisis SMC</h3>
+    <p>Market Structure:</p>
+    <ul>
+        <li>BOS: {{ 'SÍ' if results.bos else 'NO' }}</li>
+        <li>CHoCH: {{ 'SÍ' if results.choch else 'NO' }}</li>
+        <li>Señal: <span class="{{ 'buy' if results.recommendation.signal == 'BUY' else 'sell' }}">{{ results.recommendation.signal }}</span></li>
+    </ul>
 
-    <div class="seccion">
-        <h2>Niveles de Reacción</h2>
-        {% if reaction_levels and reaction_levels|length > 0 %}
-            <table>
-                <tr>
-                    <th>#</th>
-                    <th>Acción</th>
-                    <th>Precio</th>
-                    <th>Distancia (pips)</th>
-                    <th>Confianza</th>
-                    <th>Fuente</th>
-                    <th>Frescura</th>
-                    <th>Motivo</th>
-                </tr>
-                {% for level in reaction_levels %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td class="{{ 'buy' if level.action == 'BUY' else 'sell' }}">{{ level.action }}</td>
-                    <td>{{ level.price }}</td>
-                    <td>{{ level.distance_pips }}</td>
-                    <td>{{ level.confidence }}%</td>
-                    <td>{{ level.source }}</td>
-                    <td>{{ level.freshness }} min</td>
-                    <td>{{ level.reason }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        {% else %}
-            <p>No se detectaron niveles de reacción con confluencia suficiente.</p>
-        {% endif %}
-    </div>
+    <h3>Niveles Detectados</h3>
+    <p>Niveles válidos: {{ results.levels | length }}</p>
+    <p>Alta confluencia: {{ results.levels | selectattr('confluence', '>=', 80) | list | length }}</p>
+    <p>Confluencia Media: {{ results.avg_confluence | round(0) }}%</p>
 
-    <div class="seccion">
-        <h2>Resumen Técnico Institucional</h2>
+    <h3>Niveles de Reacción Clave</h3>
+    {% for level in results.levels %}
+    <p>#{{ loop.index }} <span class="{{ 'buy' if level.signal == 'BUY' else 'sell' }}">{{ level.signal }}</span></p>
+    <p>{{ level.confluence }}% - {{ level.pips | round(1) }} pips</p>
+    <p>Precio: {{ level.price | round(5) }}</p>
+    <p>Zona de entrada: {{ level.zone }}</p>
+    <p>Fuente: {{ level.source }}</p>
+    <p>Razón: {{ level.reason }}</p>
+    {% endfor %}
 
-        {% if swing_points and swing_points|length > 0 %}
-            <h3>Swing Points Detectados (1min)</h3>
-            <ul>
-                {% for point in swing_points %}
-                    <li><strong>{{ point.type }}</strong> - {{ point.price }} - {{ point.timestamp }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No se detectaron swing points en este activo.</p>
-        {% endif %}
+    <h3>Recomendación Final</h3>
+    <p><span class="{{ 'buy' if results.recommendation.signal == 'BUY' else 'sell' }}">{{ results.recommendation.signal }}</span></p>
+    <p>Confianza: {{ results.recommendation.confidence }}%</p>
+    <p>Zona de entrada: {{ results.recommendation.zone }}</p>
 
-        {% if order_blocks and order_blocks|length > 0 %}
-            <h3>Order Blocks (1min)</h3>
-            <ul>
-                {% for ob in order_blocks %}
-                    <li>{{ ob.direction }} OB @ {{ ob.price }} — Frescura: {{ ob.freshness|round(1) }} min — {{ ob.validity }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No se detectaron Order Blocks relevantes en 1min.</p>
-        {% endif %}
-
-        {% if fair_value_gaps and fair_value_gaps|length > 0 %}
-            <h3>Fair Value Gaps (FVG) en 1min</h3>
-            <ul>
-                {% for fvg in fair_value_gaps %}
-                    <li>{{ fvg.size|round(2) }} pips — {{ fvg.direction }} — {{ fvg.timestamp }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No se encontraron FVG activos en 1min.</p>
-        {% endif %}
-
-        {% if liquidity_sweeps and liquidity_sweeps|length > 0 %}
-            <h3>Barridos de Liquidez (1min)</h3>
-            <ul>
-                {% for sweep in liquidity_sweeps %}
-                    <li>{{ sweep.level }} — {{ sweep.direction }} — Frescura: {{ sweep.freshness|round(1) }} min</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No se detectaron barridos de liquidez recientes.</p>
-        {% endif %}
-    </div>
-
-    <div class="seccion highlight">
-        <h2>Diagnóstico de Confluencia Institucional</h2>
-        {% if confluence %}
-            <ul>
-                <li><strong>Score total:</strong> {{ confluence.score }}%</li>
-                <li><strong>Factores activos:</strong> {{ confluence.factors | join(", ") }}</li>
-                <li>
-                    <strong>Zona técnica actual:</strong> 
-                    <span class="{% if confluence.zone == 'Discount' %}verde{% elif confluence.zone == 'Premium' %}rojo{% else %}gris{% endif %}">
-                        {{ confluence.zone }}
-                    </span>
-                </li>
-            </ul>
-        {% else %}
-            <p>No se pudo calcular la confluencia institucional.</p>
-        {% endif %}
-    </div>
-    </body>
-    </html>
+    <canvas id="priceChart" style="max-height: 400px;"></canvas>
+    <script>
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ price_times | tojson }},
+                datasets: [{
+                    label: 'Precio',
+                    data: {{ price_data | tojson }},
+                    borderColor: '#007bff',
+                    fill: false
+                }, {
+                    label: 'Niveles Clave',
+                    data: {{ chart_levels | tojson | safe }},
+                    borderColor: '#ff0000',
+                    type: 'scatter',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                scales: {
+                    x: { title: { display: true, text: 'Tiempo' } },
+                    y: { title: { display: true, text: 'Precio' } }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+</body>
+</html>
