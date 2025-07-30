@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://smc-trading-frontend.onrender.com", "http://localhost:3000", "*"],  # '*' para pruebas
+    allow_origins=["https://smc-trading-frontend.onrender.com", "http://localhost:3000", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,6 +44,10 @@ async def analyze_symbol(request: SymbolRequest):
 @app.get("/")
 async def root():
     return {"message": "SMC Trading App Backend - Use POST /analyze to analyze a symbol"}
+
+@app.get("/test")
+async def test():
+    return {"message": "Test endpoint is working"}
 
 if __name__ == "__main__":
     import uvicorn
