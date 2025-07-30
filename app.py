@@ -1,95 +1,68 @@
-import os
-import re
-import logging
-from flask import Flask, request, render_template, redirect
-from datetime import datetime
-from pytz import timezone
-from strategy.IntegratedSMCStrategy import IntegratedSMCStrategy, TradingConfig
+from flask import Flask, render_template, request
+import yfinance as yf
+from datetime import datetime, timedelta
+import pytz
+from strategy.IntegratedSMCStrategy import SMCAnalysis
 
 app = Flask(__name__)
 
-# 📊 Configuración de estrategia
-config = TradingConfig()
-strategy = IntegratedSMCStrategy(api_key="1OFGTIDh9osWhsdERKSn6lL7Q9lUgeNH", config=config)
+def get_kill_zone_info(current_time):
+    ny_tz = pytz.timezone('America/New_York')
+    current_time_ny = current_time.astimezone(ny_tz)
+    hour = current_time_ny.hour
+    minute = current_time_ny.minute
+    if 2 <= hour < 5:  # Londres
+        remaining = (5 - hour - 1) * 60 + (60 - minute)
+        return {"active": True, "name": "London", "priority": "medium", "remaining": remaining}
+    elif 8 <= hour < 11:  # Nueva York
+        remaining = (11 - hour - 1) * 60 + (60 - minute)
+        return {"active": True, "name": "New York", "priority": "high", "remaining": remaining}
+    else:
+        return {"active": False, "name": None, "priority": None, "remaining": None}
 
-# 🧾 Logging básico
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+@app.route('/', methods=['GET', 'POST'])
+def analyze():
+    pair = "EURUSD=X"
+    timeframe = "15m"
+    confluencia_min = 70
+    error = None
+    
+    if request.method == 'POST':
+        pair = request.form.get('pair', 'EURUSD=X')
+        timeframe = request.form.get('timeframe', '15m')
+        confluencia_min = float(request.form.get('confluencia_min', 70))
 
-# 🔄 Ruta principal: redirige a /analyze
-@app.route("/")
-def home():
-    return redirect("/analyze")
+    try:
+        ohlc = yf.download(pair, period='5d', interval=timeframe)
+        ohlc.columns = ohlc.columns.str.lower()
+        if ohlc.empty:
+            error = "No se recibieron datos válidos"
+            return render_template('report.html', error=error)
+        
+        analysis = SMCAnalysis(ohlc, timeframe)
+        results = analysis.analyze()
+        kill_zone = get_kill_zone_info(datetime.now(pytz.timezone('America/Santiago')))
+        
+        price_times = ohlc.index.strftime('%Y-%m-%d %H:%M:%S').tolist()
+        price_data = ohlc['close'].tolist()
+        levels = analysis.get_levels()
+        # Formatear niveles para el gráfico
+        chart_levels = [{'x': level['time'].strftime('%Y-%m-%d %H:%M:%S'), 'y': level['price']} 
+                       for level in levels if 'time' in level]
+        
+        return render_template('report.html',
+                             pair=pair.replace('=X', ''),
+                             timeframe=timeframe,
+                             confluencia_min=confluencia_min,
+                             results=results,
+                             kill_zone=kill_zone,
+                             price_times=price_times,
+                             price_data=price_data,
+                             chart_levels=chart_levels,
+                             current_time=datetime.now(pytz.timezone('America/Santiago')).strftime('%Y-%m-%d %H:%M:%S'))
+    except Exception as e:
+        error = f"Error al procesar el análisis: {e}"
+        return render_template('report.html', error=error)
 
-# 📈 Ruta de análisis
-@app.route("/analyze", methods=["GET", "POST"])
-def analyze_route():
-    if request.method == "GET":
-        return render_template("report.html") # Asegurate que exista este template para el formulario
-
-    # 🔍 Captura del símbolo
-    symbol = request.form.get("symbol", "").strip().upper()
-    logger.info(f"📝 Símbolo recibido: '{symbol}'")
-
-    # 🛡️ Validación básica del símbolo (ej: AUDCAD)
-    if not re.match(r"^[A-Z]{6,7}$", symbol):
-        logger.warning(f"⚠️ Símbolo inválido: '{symbol}'")
-        return (
-            f"<h1>Activo inválido</h1>"
-            f"<p>El símbolo '{symbol}' no tiene el formato correcto. Usá algo tipo 'AUDCAD'.</p>"
-        )
-
-    logger.info(f"🔬 Iniciando análisis institucional de {symbol}")
-    result = strategy.analyze_symbol(symbol)
-
-    # ⏱️ Hora UTC-3
-    local_time = datetime.now(timezone("America/Argentina/Buenos_Aires")).strftime("%Y-%m-%d %H:%M:%S")
-    result["analysis_time"] = local_time
-    result["symbol"] = symbol  # Por si falla el análisis
-
-    # 🚨 Fallback si hay error
-    if "error" in result:
-        logger.error(f"❌ Error en el análisis: {result['error']}")
-        result = {
-            "symbol": symbol,
-            "analysis_time": local_time,
-            "current_price": "No disponible",
-            "structure_1min": None,
-            "active_kill_zone": None,
-            "premium_discount_zones": None,
-            "reaction_levels": [],
-            "recommendation": None,
-            "swing_points": [],
-            "order_blocks": [],
-            "fair_value_gaps": [],
-            "liquidity_sweeps": [],
-            "confluence": {
-                "score": None,
-                "factors": [],
-                "zone": "Neutral"
-            }
-        }
-
-    # 🛡️ Blindaje adicional ante claves faltantes
-    result.setdefault("current_price", "No disponible")
-    result.setdefault("structure_1min", None)
-    result.setdefault("active_kill_zone", None)
-    result.setdefault("premium_discount_zones", None)
-    result.setdefault("reaction_levels", [])
-    result.setdefault("recommendation", None)
-    result.setdefault("swing_points", [])
-    result.setdefault("order_blocks", [])
-    result.setdefault("fair_value_gaps", [])
-    result.setdefault("liquidity_sweeps", [])
-    result.setdefault("confluence", {
-        "score": None,
-        "factors": [],
-        "zone": "Neutral"
-    })
-
-    # ✅ Render final
-    return render_template("report.html", **result)
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(debug=True, host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    app.run(debug=True)
