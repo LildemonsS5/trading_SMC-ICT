@@ -1,13 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="SMC Trading App" />
-    <title>SMC Trading App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>SMC Trading</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #loading { display: none; }
+    #results { display: none; background: #f4f4f4; padding: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>Analizador SMC/ICT</h1>
+  <form id="analyzeForm">
+    <label>Par o símbolo:
+      <input type="text" name="symbol" value="EURUSD" required />
+    </label><br /><br />
+
+    <label>Confluencia mínima (%):
+      <input type="number" name="confluence" value="75" min="0" max="100" />
+    </label><br /><br />
+
+    <button type="submit">Analizar</button>
+  </form>
+
+  <div id="loading">⏳ Analizando... por favor espera.</div>
+  <div id="results"></div>
+
+  <script>
+    const form = document.getElementById('analyzeForm');
+    const resultsDiv = document.getElementById('results');
+    const loadingDiv = document.getElementById('loading');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      loadingDiv.style.display = 'block';
+      resultsDiv.style.display = 'none';
+
+      try {
+        const response = await fetch('/analyze', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        resultsDiv.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        resultsDiv.textContent = '❌ Error al conectar con el servidor.';
+        console.error(error);
+      } finally {
+        loadingDiv.style.display = 'none';
+        resultsDiv.style.display = 'block';
+      }
+    });
+  </script>
+
+</body>
 </html>
